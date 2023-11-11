@@ -67,16 +67,22 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// 从环境变量获取代理服务器IP
 	proxyServerIP := os.Getenv("PROXY_SERVER_IP")
 	if proxyServerIP == "" {
-		// 如果环境变量没有获取到IP，尝试通过 curl ipconfig.me 获取
+		// 如果环境变量没有获取到IP，尝试通过 curl ipinfo.io/ip 获取
 		cmd := exec.Command("curl", "ipinfo.io/ip")
 		output, err := cmd.Output()
 		if err == nil {
 			// 如果成功获取IP，设置到请求头
 			proxyServerIP = strings.TrimSpace(string(output))
 		} else {
-			log.Println("Failed to get IP from ipconfig.me:", err)
+			log.Println("Failed to get IP from ipinfo.io/ip:", err)
+			if cmdErr, ok := err.(*exec.ExitError); ok {
+				// 获取curl命令的标准错误输出
+				stderr := string(cmdErr.Stderr)
+				log.Println("curl command error output:", stderr)
+			}
 		}
 	}
+	log.Println("Proxy Server IP:", proxyServerIP)
 
 	if proxyServerIP != "" {
 		// 设置客户端IP地址到请求头
