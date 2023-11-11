@@ -68,7 +68,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	proxyServerIP := os.Getenv("PROXY_SERVER_IP")
 	if proxyServerIP == "" {
 		// 如果环境变量没有获取到IP，尝试通过 curl ipconfig.me 获取
-		cmd := exec.Command("curl", "ipconfig.me")
+		cmd := exec.Command("curl", "ipinfo.io/ip")
 		output, err := cmd.Output()
 		if err == nil {
 			// 如果成功获取IP，设置到请求头
