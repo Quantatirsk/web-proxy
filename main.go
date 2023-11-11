@@ -16,16 +16,17 @@ import (
 var (
 	target string // 目标域名
 	port   int    // 代理端口
+	// httpProxy = "http://127.0.0.1:10809" // 本地代理地址和端口
 )
 
 func main() {
+
 	// 从环境变量获取目标域名
 	target := os.Getenv("TARGET_URL")
 	if target == "" {
 		// 如果环境变量未设置，则默认使用 "https://api.openai.com"
 		target = "https://api.openai.com"
 	}
-
 	// 从命令行参数获取代理端口
 	flag.IntVar(&port, "port", 9000, "The proxy port.")
 	flag.Parse()
@@ -53,7 +54,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 
 	// 拼接目标URL（带上查询字符串，如果有的话）
 	// 如果请求中包含 X-Target-Host 头，则使用该头作为目标域名
-	// 优先级 header > env variable
+	// 优先级 header > args > default
 	var targetURL string
 	if r.Header.Get("X-Target-Host") != "" {
 		targetURL = "https://" + r.Header.Get("X-Target-Host") + newPath
@@ -106,7 +107,18 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 默认超时时间设置为300s（应对长上下文）
-	client := &http.Client{}
+	client := &http.Client{
+		// Timeout: 300 * time.Second,  // 代理不干涉超时逻辑，由客户端自行设置
+	}
+
+	// 支持本地测试通过代理请求
+	/*if os.Getenv("ENV") == "local" {
+		proxyURL, _ := url.Parse(httpProxy) // 本地HTTP代理配置
+		client.Transport = &http.Transport{
+			Proxy:           http.ProxyURL(proxyURL),
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}*/
 
 	// 发起代理请求
 	resp, err := client.Do(proxyReq)
@@ -133,7 +145,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		if n, err := resp.Body.Read(buf); err == io.EOF || n == 0 {
 			return
 		} else if err != nil {
-			log.Println("error while reading resp body: ", err.Error())
+			log.Println("error while reading respbody: ", err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		} else {
