@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"strconv"
@@ -39,8 +40,9 @@ func main() {
 
 func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// 过滤无效URL
-	if r.URL.Scheme == "" || r.URL.Host == "" {
-		log.Println("Error parsing URL: Invalid URL")
+	_, err := url.Parse(r.URL.String())
+	if err != nil {
+		log.Println("Error parsing URL: ", err.Error())
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
