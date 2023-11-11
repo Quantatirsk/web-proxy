@@ -1,0 +1,9 @@
+version: '3'
+services:
+  web_proxy:
+    image: quantatrisk/web-proxy:latest
+    ports:
+      - "9000:9000"
+    env_file:
+      - .env
+    restart: always
