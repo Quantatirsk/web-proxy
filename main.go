@@ -20,14 +20,8 @@ var (
 )
 
 func main() {
-
-	// 从环境变量获取目标域名
-	target := os.Getenv("TARGET_URL")
-	if target == "" {
-		// 如果环境变量未设置，则默认使用 "https://api.openai.com"
-		target = "https://api.openai.com"
-	}
-	// 从命令行参数获取代理端口
+	// 从命令行参数获取配置文件路径
+	flag.StringVar(&target, "domain", os.Getenv("TARGET_URL"), "The target domain to proxy.")
 	flag.IntVar(&port, "port", 9000, "The proxy port.")
 	flag.Parse()
 
@@ -70,10 +64,8 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Proxying request to: %s\n", targetURL)
 	}
 
-	// 修改请求头，将客户端IP地址设置为代理服务器IP地址
 	// 从环境变量获取代理服务器IP
 	proxyServerIP := os.Getenv("PROXY_SERVER_IP")
-
 	if proxyServerIP == "" {
 		// 如果环境变量没有获取到IP，尝试通过 curl ipconfig.me 获取
 		cmd := exec.Command("curl", "ipconfig.me")
