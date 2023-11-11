@@ -20,7 +20,7 @@ var (
 
 func main() {
 	// 从命令行参数获取配置文件路径
-	flag.StringVar(&target, "domain", "https://api.openai.com", "The target domain to proxy.")
+	flag.StringVar(&target, "domain", os.Getenv("TARGET_URL"), "The target domain to proxy.")
 	flag.IntVar(&port, "port", 9000, "The proxy port.")
 	flag.Parse()
 
@@ -49,11 +49,11 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// 如果请求中包含 X-Target-Host 头，则使用该头作为目标域名
 	// 优先级 header > args > default
 	var targetURL string
-	if r.Header.Get("X-Target-Host") != "" {
-		targetURL = "https://" + r.Header.Get("X-Target-Host") + newPath
-	} else {
-		targetURL = target + newPath
-	}
+	// if r.Header.Get("X-Target-Host") != "" {
+	// 	targetURL = "https://" + r.Header.Get("X-Target-Host") + newPath
+	// } else {
+	targetURL = target + newPath
+	// }
 	if r.URL.RawQuery != "" {
 		targetURL += "?" + r.URL.RawQuery
 	}
@@ -61,6 +61,12 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
 	// 本地打印代理请求完整URL用于调试
 	if os.Getenv("ENV") == "local" {
 		fmt.Printf("Proxying request to: %s\n", targetURL)
+	}
+
+	// 修改请求头，将客户端IP地址设置为代理服务器IP地址
+	proxyServerIP := os.Getenv("PROXY_SERVER_IP")
+	if proxyServerIP != "" {
+		r.Header.Set("X-Forwarded-For", proxyServerIP)
 	}
 
 	// 创建代理HTTP请求
